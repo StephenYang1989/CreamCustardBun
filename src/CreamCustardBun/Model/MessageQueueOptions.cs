@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CreamCustardBun.Options
+namespace CreamCustardBun.Model
 {
     public class MessageQueueOption
     {
+        public string ClientName { set; get; }
+
         public string Host { set; get; }
 
         public int Port { set; get; }
@@ -20,15 +22,21 @@ namespace CreamCustardBun.Options
 
         public string ExchangeType { set; get; }
 
+        public bool ExchangeDurable { set; get; }
+
+        public bool ExchangeAutoDelete { set; get; }
+
         public string QueueName { set; get; }
 
+        public bool QueueDurable { set; get; }
+
+        public bool QueueExclusive { set; get; }
+
+        public bool QueueAutoDelete { set; get; }
+
+        public bool QueueAutoAck { set; get; }
+
         public string RoutingKey { set; get; }
-
-        public bool IsExclusive { set; get; } = true;
-
-        public bool IsDurable { set; get; }
-
-        public bool IsAutoDeleted { set; get; }
 
         public string CustomerTag { set; get; }
     }

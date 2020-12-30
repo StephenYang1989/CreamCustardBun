@@ -14,6 +14,8 @@ namespace CreamCustardBun.Model
 
         public bool IsAutoDeleted { set; get; }
 
-        public string CustomerTag { set; get; }
+        public string ConsumerTag { set; get; }
+
+        public bool AutoAck { set; get; }
     }
 }

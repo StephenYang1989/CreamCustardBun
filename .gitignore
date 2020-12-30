@@ -6,3 +6,6 @@
 /src/.vs/CreamCustardBun
 /src/CreamCustardBun/bin/Debug/netstandard2.0
 /src/CreamCustardBun/obj
+/src/CreamCustardBun/bin/Release/netstandard2.0
+/src/Demo/obj
+/src/Demo/bin/Debug/netcoreapp3.1

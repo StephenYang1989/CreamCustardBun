@@ -1,18 +1,24 @@
 ﻿using CreamCustardBun.Model;
-using CreamCustardBun.Options;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace CreamCustardBun.Handling.Interface
 {
-    public interface IConsumer<T> : IDisposable
+    public interface IConsumer : IDisposable
     {
         event EventHandler<BrokerConnectedEventArgs> Connected;
 
         event EventHandler<BrokerDisconnectedEventArgs> Disconnected;
 
-        event EventHandler<MessageArrivedEventArgs<T>> MessageArrived;
+        event EventHandler<MessageArrivedEventArgs> MessageArrived;
+
+        /// <summary>
+        /// Is reconnect the queue while the connection is shutdown
+        /// </summary>
+        bool IsReconnect { set; get; }
+
+        void Start(MessageQueueOption option);
 
         void Start(HostOption hostOption, ExchangeOption exchangeOption, QueueOption queueOption);
 
@@ -20,5 +26,10 @@ namespace CreamCustardBun.Handling.Interface
 
         uint ConsumerCount();
         uint MessageCount();
+    }
+
+    public interface IConsumer<T> : IConsumer
+    {
+        event EventHandler<MessageArrivedEventArgs<T>> MessageArrived;
     }
 }

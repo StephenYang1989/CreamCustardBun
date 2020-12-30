@@ -12,7 +12,6 @@ namespace CreamCustardBun.Model
 
         public string RoutingKey { set; get; }
 
-        public bool IsExclusive { set; get; }
 
         public bool IsDurable { set; get; }
 

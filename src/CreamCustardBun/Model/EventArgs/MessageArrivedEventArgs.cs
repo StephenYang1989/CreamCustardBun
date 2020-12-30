@@ -4,41 +4,41 @@ using System.Text;
 
 namespace CreamCustardBun.Model
 {
-    public class MessageArrivedEventArgs<T> : EventArgs
+    public class MessageArrivedEventArgs : EventArgs
     {
         /// <summary>
         /// The consumer tag of the consumer that the message was delivered to.
         /// </summary>
-        public string ConsumerTag { get; private set; }
+        public string ConsumerTag { get; protected set; }
 
         /// <summary>
         /// The delivery tag for this delivery. 
         /// </summary>
-        public ulong DeliveryTag { get; private set; }
+        public ulong DeliveryTag { get; protected set; }
 
         /// <summary>
         /// The exchange the message was originally published to.
         /// </summary>
-        public string Exchange { get; private set; }
+        public string Exchange { get; protected set; }
 
         /// <summary>
         /// The AMQP "redelivered" flag.
         /// </summary>
-        public bool Redelivered { get; private set; }
+        public bool Redelivered { get; protected set; }
 
         /// <summary>
         /// The routing key this queue binding.
         /// </summary>
-        public string RoutingKey { get; private set; }
+        public string RoutingKey { get; protected set; }
 
         /// <summary>
         /// Message body
         /// </summary>
-        public T Data { set; private get; }
+        public byte[] Data { protected set; get; }
 
-        private Action<ulong,bool> AckAction;
+        protected Action<ulong, bool> AckAction;
 
-        public MessageArrivedEventArgs(string consumerTag, ulong deliveryTag, string exchange, bool redelivered, string routingKey, T data,Action<ulong,bool> ackAction)
+        public MessageArrivedEventArgs(string consumerTag, ulong deliveryTag, string exchange, bool redelivered, string routingKey, byte[] data, Action<ulong, bool> ackAction)
         {
             ConsumerTag = consumerTag;
             DeliveryTag = deliveryTag;
@@ -52,9 +52,22 @@ namespace CreamCustardBun.Model
         /// <summary>
         /// Ack message
         /// </summary>
-        public void Ack() 
+        public void Ack()
         {
             AckAction?.Invoke(DeliveryTag, false);
+        }
+    }
+
+    public class MessageArrivedEventArgs<T> : MessageArrivedEventArgs
+    {
+        /// <summary>
+        /// Message body
+        /// </summary>
+        public new T Data { private set; get; }
+
+        public MessageArrivedEventArgs(string consumerTag, ulong deliveryTag, string exchange, bool redelivered, string routingKey, T data, Action<ulong, bool> ackAction) : base(consumerTag, deliveryTag, exchange, redelivered, routingKey, new byte[] { }, ackAction)
+        {
+            Data = data;
         }
     }
 }
