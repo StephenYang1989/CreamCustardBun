@@ -4,7 +4,12 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>StephenYang</Authors>
     <Company>StephenYang</Company>
-    <Version>0.9.0</Version>
+    <Version>0.9.1</Version>
+    <Description>Cream custard bun is named "流沙包" in china.Cream custard bun is delicious and the indentation is fluid.That is the reason why I named it.I hope people who use it can feel happiness and as fluent as eating Cream custard bun.
+This library is a package for RabbitMQ. User can use Consumer(byte[]) Or Consumer&lt;T&gt; to consumer message queue easily.And use Producer to push data into a RabbitMQ queue.
+This library support encode and decode json data ,and support compress the raw data yet.You can customed a Encoder or Decoder by implement the IMessageEncoder or IMessageDeoder.</Description>
+    <AssemblyVersion>0.9.1.0</AssemblyVersion>
+    <Copyright>©Stephen Yang 2020-2021</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
