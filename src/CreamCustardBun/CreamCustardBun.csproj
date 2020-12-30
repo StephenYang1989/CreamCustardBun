@@ -10,6 +10,7 @@ This library is a package for RabbitMQ. User can use Consumer(byte[]) Or Consume
 This library support encode and decode json data ,and support compress the raw data yet.You can customed a Encoder or Decoder by implement the IMessageEncoder or IMessageDeoder.</Description>
     <AssemblyVersion>0.9.1.0</AssemblyVersion>
     <Copyright>©Stephen Yang 2020-2021</Copyright>
+    <PackageProjectUrl>https://github.com/StephenYang1989/CreamCustardBun</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
