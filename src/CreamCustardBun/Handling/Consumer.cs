@@ -3,8 +3,10 @@ using CreamCustardBun.Model;
 using CreamCustardBun.Serialization;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
@@ -82,17 +84,27 @@ namespace CreamCustardBun.Handling
         /// <summary>
         /// Connected event
         /// </summary>
-        public event EventHandler<BrokerConnectedEventArgs> Connected;
+        public event EventHandler<ConnectedEventArgs> Connected;
 
         /// <summary>
         /// Disconnected event
         /// </summary>
-        public event EventHandler<BrokerDisconnectedEventArgs> Disconnected;
+        public event EventHandler<DisconnectedEventArgs> Disconnected;
 
         /// <summary>
         /// Message arrived event
         /// </summary>
         public event EventHandler<MessageArrivedEventArgs> MessageArrived;
+
+        /// <summary>
+        /// Trigger when the connection was fail
+        /// </summary>
+        public event EventHandler<ConnectionFailEventArgs> ConnectFail;
+
+        /// <summary>
+        /// Trigger when an unknow exception was occured.
+        /// </summary>
+        public event EventHandler<UnknownExceptionEventArgs> UnknowError;
 
         /// <summary>
         /// Get the consumer count in this queu
@@ -159,27 +171,46 @@ namespace CreamCustardBun.Handling
             if (string.IsNullOrWhiteSpace(mLastConsumerTag))
                 mLastConsumerTag = string.Empty;
 
-            var factory = new ConnectionFactory()
+            try
             {
-                ClientProvidedName = hostOption.ClientName,
-                HostName = hostOption.Host,
-                Port = hostOption.Port,
-                VirtualHost = hostOption.VirtualHost,
-                UserName = hostOption.UserName,
-                Password = hostOption.Password,
+                var factory = new ConnectionFactory()
+                {
+                    ClientProvidedName = hostOption.ClientName,
+                    HostName = hostOption.Host,
+                    Port = hostOption.Port,
+                    VirtualHost = hostOption.VirtualHost,
+                    UserName = hostOption.UserName,
+                    Password = hostOption.Password,
 
-                RequestedConnectionTimeout = TimeSpan.FromSeconds(hostOption.ConnectionTimeout),
-                RequestedHeartbeat = TimeSpan.FromSeconds(hostOption.HeartBeat)
-            };
+                    RequestedConnectionTimeout = TimeSpan.FromSeconds(hostOption.ConnectionTimeout),
+                    RequestedHeartbeat = TimeSpan.FromSeconds(hostOption.HeartBeat)
+                };
 
-            mConnection = factory.CreateConnection();
+                mConnection = factory.CreateConnection();
 
-            mChannel = mConnection.CreateModel();
+                mChannel = mConnection.CreateModel();
 
-            mChannel.ExchangeDeclare(exchangeOption.ExchangeName, exchangeOption.ExchangeType);
-            mChannel.QueueDeclare(queueOption.QueueName, queueOption.IsDurable, queueOption.IsExclusive, queueOption.IsAutoDeleted);
-            mChannel.QueueBind(queueOption.QueueName, exchangeOption.ExchangeName, exchangeOption.RoutingKey);
-            mChannel.BasicQos(0, 1, false);
+                mChannel.ExchangeDeclare(exchangeOption.ExchangeName, exchangeOption.ExchangeType);
+                mChannel.QueueDeclare(queueOption.QueueName, queueOption.IsDurable, queueOption.IsExclusive, queueOption.IsAutoDeleted);
+                mChannel.QueueBind(queueOption.QueueName, exchangeOption.ExchangeName, exchangeOption.RoutingKey);
+                mChannel.BasicQos(0, queueOption.Qos, false);
+            }
+            catch (BrokerUnreachableException bex)
+            {
+                ConnectFail?.Invoke(this, new ConnectionFailEventArgs { Message = bex.Message });
+            }
+            catch (ConnectFailureException cex)
+            {
+                ConnectFail?.Invoke(this, new ConnectionFailEventArgs { Message = cex.Message });
+            }
+            catch (SocketException sex)
+            {
+                ConnectFail?.Invoke(this, new ConnectionFailEventArgs { Message = sex.Message });
+            }
+            catch (Exception ex)
+            {
+                UnknowError?.Invoke(this, new UnknownExceptionEventArgs { Message = ex.Message });
+            }
         }
 
         /// <summary>
@@ -249,7 +280,7 @@ namespace CreamCustardBun.Handling
 
         protected void Consumer_Registered(object sender, ConsumerEventArgs e)
         {
-            Connected?.Invoke(sender, new BrokerConnectedEventArgs());
+            Connected?.Invoke(sender, new ConnectedEventArgs());
             if (mTimerReconnect != null)
             {
                 mTimerReconnect.Change(Timeout.Infinite, Timeout.Infinite);
@@ -260,7 +291,7 @@ namespace CreamCustardBun.Handling
 
         protected void Consumer_Shutdown(object sender, ShutdownEventArgs e)
         {
-            Disconnected?.Invoke(sender, new BrokerDisconnectedEventArgs());
+            Disconnected?.Invoke(sender, new DisconnectedEventArgs());
 
             if (!IsCloseMamul && mTimerReconnect != null)
             {

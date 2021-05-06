@@ -10,11 +10,15 @@ namespace CreamCustardBun.Handling
 {
     public class Producer : IProducer
     {
+        private IConnectionFactory mConnectionFactory;
+
         private IModel mChannel;
 
         private IConnection mConnection;
 
         string mExchangeName;
+
+        string mExchangeType;
 
         string mRoutingKey;
 
@@ -59,7 +63,7 @@ namespace CreamCustardBun.Handling
         /// <param name="exchangeOption"></param>
         public void Start(HostOption hostOption, ExchangeOption exchangeOption)
         {
-            var factory = new ConnectionFactory()
+            mConnectionFactory = new ConnectionFactory()
             {
                 ClientProvidedName = hostOption.ClientName,
                 HostName = hostOption.Host,
@@ -72,13 +76,14 @@ namespace CreamCustardBun.Handling
             };
 
             mExchangeName = exchangeOption.ExchangeName;
+            mExchangeType = exchangeOption.ExchangeType;
             mRoutingKey = exchangeOption.RoutingKey;
 
-            mConnection = factory.CreateConnection();
+            mConnection = mConnectionFactory.CreateConnection();
 
             mChannel = mConnection.CreateModel();
 
-            mChannel.ExchangeDeclare(exchangeOption.ExchangeName, exchangeOption.ExchangeType);
+            mChannel.ExchangeDeclare(mExchangeName, mExchangeType);
         }
 
         public void PublishData<T>(T t)
@@ -89,8 +94,17 @@ namespace CreamCustardBun.Handling
 
         public void PublishData(byte[] data)
         {
+            if (!mConnection.IsOpen) 
+            {
+                mConnection = mConnectionFactory.CreateConnection();
+            }
+
             if (mChannel.IsClosed)
-                throw new Exception("Broker unreachable");
+            {
+                mChannel = mConnection.CreateModel();
+
+                mChannel.ExchangeDeclare(mExchangeName,mExchangeType);
+            }
 
             mChannel.BasicPublish(mExchangeName, mRoutingKey, false, null, data);
         }

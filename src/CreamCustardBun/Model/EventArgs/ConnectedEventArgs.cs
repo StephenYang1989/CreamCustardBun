@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CreamCustardBun.Model
 {
-    public class BrokerConnectedEventArgs : EventArgs
+    public class ConnectedEventArgs : EventArgs
     {
 
     }

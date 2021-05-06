@@ -7,9 +7,9 @@ namespace CreamCustardBun.Handling.Interface
 {
     public interface IConsumer : IDisposable
     {
-        event EventHandler<BrokerConnectedEventArgs> Connected;
+        event EventHandler<ConnectedEventArgs> Connected;
 
-        event EventHandler<BrokerDisconnectedEventArgs> Disconnected;
+        event EventHandler<DisconnectedEventArgs> Disconnected;
 
         event EventHandler<MessageArrivedEventArgs> MessageArrived;
 

@@ -4,8 +4,8 @@ using System.Text;
 
 namespace CreamCustardBun.Model
 {
-    public class BrokerDisconnectedEventArgs : EventArgs
+    public class ConnectionFailEventArgs : EventArgs
     {
-
+        public string Message { set; get; }
     }
 }

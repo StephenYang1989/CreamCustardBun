@@ -17,5 +17,7 @@ namespace CreamCustardBun.Model
         public string ConsumerTag { set; get; }
 
         public bool AutoAck { set; get; }
+
+        public ushort Qos { set; get; } = 1;
     }
 }
