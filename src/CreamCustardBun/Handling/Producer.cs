@@ -22,10 +22,31 @@ namespace CreamCustardBun.Handling
 
         string mRoutingKey;
 
+        string mQueueName;
+
+        bool mQueueDurable;
+
+        bool mQueueAutoDelete;
+
+        bool mQueueExclusive;
+
         /// <summary>
         /// DEnoder
         /// </summary>
         IMessageEncoder mEncoder;
+
+        /// <summary>
+        /// 是否已连接
+        /// </summary>
+        public bool IsConnected
+        {
+            get
+            {
+                if (mChannel == null)
+                    return false;
+                return mChannel.IsOpen;
+            }
+        }
 
         public Producer(IMessageEncoder encoder)
         {
@@ -53,15 +74,27 @@ namespace CreamCustardBun.Handling
                 RoutingKey = option.RoutingKey
             };
 
+            var queueOption = new QueueOption
+            {
+                QueueName = option.QueueName,
+                IsDurable = option.QueueDurable,
+                IsAutoDeleted = option.QueueAutoDelete,
+                IsExclusive = option.QueueExclusive,
+            };
+
             Start(hostOption, exchangeOption);
+        }
+        public void Start(HostOption hostOption, ExchangeOption exchangeOption)
+        {
+            Start(hostOption, exchangeOption, null);
         }
 
         /// <summary>
-        /// Start consume
+        /// Start publisher
         /// </summary>
         /// <param name="hostOption"></param>
         /// <param name="exchangeOption"></param>
-        public void Start(HostOption hostOption, ExchangeOption exchangeOption)
+        public void Start(HostOption hostOption, ExchangeOption exchangeOption, QueueOption queueOption)
         {
             mConnectionFactory = new ConnectionFactory()
             {
@@ -82,19 +115,45 @@ namespace CreamCustardBun.Handling
             mConnection = mConnectionFactory.CreateConnection();
 
             mChannel = mConnection.CreateModel();
+            if (queueOption != null && !string.IsNullOrWhiteSpace(queueOption.QueueName))
+            {
+                mQueueName = queueOption.QueueName;
+                mQueueDurable = queueOption.IsDurable;
+                mQueueAutoDelete = queueOption.IsAutoDeleted;
+                mQueueExclusive = queueOption.IsExclusive;
+
+                mChannel.QueueDeclare(mQueueName, mQueueDurable, mQueueExclusive, mQueueAutoDelete);
+            }
 
             mChannel.ExchangeDeclare(mExchangeName, mExchangeType);
         }
 
+        public void ReConnect()
+        {
+            if (mConnection == null || !mConnection.IsOpen)
+                mConnection = mConnectionFactory.CreateConnection();
+
+            if (mChannel == null || !mChannel.IsOpen)
+            {
+                mChannel = mConnection.CreateModel();
+                mChannel.ExchangeDeclare(mExchangeName, mExchangeType);
+
+                if (!string.IsNullOrWhiteSpace(mQueueName))
+                {
+                    mChannel.QueueDeclare(mQueueName, mQueueDurable, mQueueExclusive, mQueueAutoDelete);
+                }
+            }
+        }
+
         public void PublishData<T>(T t)
         {
-            var data= mEncoder.EncodeMessage(t);
+            var data = mEncoder.EncodeMessage(t);
             PublishData(data);
         }
 
         public void PublishData(byte[] data)
         {
-            if (!mConnection.IsOpen) 
+            if (!mConnection.IsOpen)
             {
                 mConnection = mConnectionFactory.CreateConnection();
             }
@@ -103,7 +162,7 @@ namespace CreamCustardBun.Handling
             {
                 mChannel = mConnection.CreateModel();
 
-                mChannel.ExchangeDeclare(mExchangeName,mExchangeType);
+                mChannel.ExchangeDeclare(mExchangeName, mExchangeType);
             }
 
             mChannel.BasicPublish(mExchangeName, mRoutingKey, false, null, data);
